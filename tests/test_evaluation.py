@@ -47,7 +47,9 @@ class EvaluationTests(unittest.TestCase):
                      lambda e: e.update(backend='unknown'),
                      lambda e: e.update(gold={'forged': True}, answer={'forged': True}),
                      lambda e: e.update(cache_source_event_id='missing', answer={'forged': True}),
-                     lambda e: e.update(dependency_sha256='fake')]
+                     lambda e: e.update(dependency_sha256='fake'),
+                     lambda e: e.update(reason='fabricated_hit'),
+                     lambda e: e.update(session_step=999)]
         for mutate in mutations:
             with self.subTest(mutate=mutate), tempfile.TemporaryDirectory() as tmp:
                 p = Path(tmp)

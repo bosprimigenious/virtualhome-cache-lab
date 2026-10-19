@@ -49,6 +49,11 @@ def execute(course_zip, output_dir, backend=None, session_limit=None, task_limit
         "request_manifest": build_manifest(selected, tasks), "started_at_utc": datetime.now(timezone.utc).isoformat(),
         "backend": "mock" if backend is None else "openai", "judge_version": VERSION,
         "strategies": [spec[0] for spec in STRATEGIES], "boundary_policy": boundary_policy,
+        "reset_boundaries": [[row['session_id'], row['task_id']]
+                             for row in audit['graph_discontinuities']
+                             if boundary_policy == 'reset' and any(
+                                 row['session_id'] == session['session_id'] and row['task_id'] in session['task_ids']
+                                 for session in selected)],
         "selected_sessions": selected, "expected_requests_per_strategy": expected,
         "model": backend.configuration() if backend is not None else {"name": "gold_mock"},
         "dependency_protocol": "course-v1-edge-order-bidirectional-in",
