@@ -1,45 +1,61 @@
 # VirtualHome Cache Lab
 
-机器学习实践训练 · 题目 ③ · 两人小组。研究连续任务中的推理缓存复用和失效管理。
+机器学习实践训练 · 题目 ③ · 两人小组。研究状态变化下的智能体缓存复用与失效管理。
 
-**当前状态：起步实现，完整实验 NOT READY。** 已实现课程 ZIP 读取、三种缓存策略、离线 Mock 对比和单元测试。未接真实语言模型，未完成失效混淆分析、正式实验和报告。Mock 从 gold 读取答案，不能作为模型效果或加速比证据。
+**bosprimigenious 的离线开发范围已实现并通过聚合验收；课程完整验收 NOT READY。** 本分支包含依赖、缓存、事件日志、证据复算和集成门禁。真实模型适配、提示与扩展判分由 e39267d8 接续，真实接口按用户决定暂不配置。
 
-## 运行
+## 一条命令验收
 
-Python 3.11+，当前实现仅使用标准库，无第三方依赖。仓库使用 uv 管理环境。
+Python 3.11+，标准库实现，使用 uv 锁文件：
 
 ```bash
 uv sync --locked
-uv run python -m unittest discover -s tests -v
-uv run python -m cachelab.run --course-zip /absolute/path/virtualhome_cache_lab.zip --output results/mock-001.json
+uv run python -m cachelab.acceptance --output-dir results/acceptance-001
 ```
 
-输出文件必须不存在，以免覆盖旧实验。没有教师 ZIP 时可以直接运行单元测试；测试场景由本项目自行构造。ZIP、课件、指导书和第三方轨迹没有随代码再分发，MIT 仅适用于本项目自行编写的代码与文档。
+默认使用本项目自建的小场景，不需要教师 ZIP、模型、密钥或联网。聚合运行单元测试、reset/preserve 对照、不可变复算、故障注入和日志篡改检查。任一门禁失败返回非零；完整执行记录保存在新输出目录，重复目录会被拒绝。
 
-## 实验定义
+本地课程包可用时运行：
 
-- 按原会话清单回放动作后的状态图；跨会话清空缓存。原包有 5 处会话内图不连续边界，输出会逐项记录；当前不修补数据、不宣称世界完全连续。
-- 每步请求目标物品的位置和一份环境摘要。无缓存、固定 k=3/5/10 步、依赖变化失效共用数据顺序。
-- fine 位置依赖：所有同名物品、IN/ON 祖先、反向 HOLDS_RH/HOLDS_LH 与持有者的位置。比较完整查询投影，能发现新增边、删除边和原本不存在的物品。摘要依赖全图，先保证覆盖；进一步裁剪留到后续实验。
-- coarse 依赖全图，是保守基线。**不同于教师包只监视房间标识的 coarse 起点实现**；不能把两者的结果混称为同一算法。
-- 当前每次查询重新计算投影，没有增量差分索引，因此尚未证明总运行时间收益。
-- 判分为结构化值的大小写和空白归一化比较；缺字段与 null 不等价，不宣称支持任意语义等价。
-- 有效/错误复用比例的分母都是复用次数；无复用记 null。decision_calls 是决策用 Mock 次数，evaluation_model_calls 独立列示；mock_compute_seconds 不是 LLM 推理耗时。
-- 数据审计记录 ZIP SHA-256、会话数、实际引用任务数和未引用文件，禁止把文件数当作实际评测任务数。
+```bash
+uv run python -m cachelab.acceptance \
+  --course-zip /absolute/path/virtualhome_cache_lab.zip \
+  --output-dir results/course-acceptance-001
+```
 
-## 两人分工与完成门禁
+只运行实验或离线复算：
 
-| 成员 | 主责 | 完成证据 |
+```bash
+uv run python -m cachelab.experiment \
+  --course-zip /absolute/path/virtualhome_cache_lab.zip \
+  --backend mock --boundary-policy reset --output-dir results/mock-001
+uv run python -m cachelab.evaluate results/mock-001
+```
+
+## 已实现内容
+
+- 无缓存、固定 k=3/5/10、依赖 fine/coarse 六组策略，模型输入独立于缓存依赖粒度。
+- 位置依赖覆盖双向 IN、边顺序、IN/ON 祖先、HOLDS 与持有者位置；摘要/粗粒度使用全图。
+- 会话内跨任务缓存、跨会话清空，已检测到的不连续边界默认 reset；preserve 单独作为敏感性分析。
+- 每次请求记录输入/依赖哈希、gold、答案/错误、失效原因、缓存来源事件、创建步和耗时。失败不缓存、不回退 gold。
+- 复算绑定输入清单、配置和日志 SHA-256，核对缓存来源、实际判定、重置链与评分版本，输出 JSON/CSV/Markdown 汇总。
+- 后端以 `Backend.generate/configuration` 接入；模型客户端尚未合入。`--backend openai` 在客户端缺失时明确报错，不会自动安装或调用服务。
+
+原包虽然有 60 个任务文件，原清单只引用 40 个，另有 5 处会话内状态不连续。不能宣称已评测 60 个任务或完全连续世界。原 gold 对抓取的语义与指导书有偏差，本轮原样评估并披露，不静默改标注。
+
+Mock 从 gold 读答案，不能作为模型准确率或加速比证据。历史入口 `cachelab.run` 保留用于复现；新依赖/评分/边界协议不同，不直接混合比较新旧基线。课程 ZIP、课件、未经授权的轨迹、gold 和原始日志不上传。MIT 适用于自行编写的代码与文档。
+
+## 分工与文档
+
+| 成员 | 主责 | 当前交付 |
 |---|---|---|
-| bosprimigenious | 状态图依赖、缓存策略、粒度与 k 消融 | 新增/删除/抓取/跨会话回归测试；完整事件日志与失效分析 |
-| e39267d8 | 小模型接口、配置、评测与报告 | 同模型同提示同解码配置跑全策略；原始输出、调用次数、推理耗时 |
+| bosprimigenious | 依赖、缓存、事件日志、集成验收 | 本分支离线实现和聚合验收；真实集成待模型适配 |
+| e39267d8 | 模型提示、结构化判分、评测分析、报告 | 按后端契约接续，真实配置暂缓 |
 
-共同复核数据、实验结论与报告；彼此运行对方的代码，不只阅读结论。详见 [开发手册](docs/development.md)、[阶段计划](docs/plan.md)、[协作约定](CONTRIBUTING.md) 和 [验收记录](docs/verification.md)。
+- [开发手册](docs/development.md)：实际命令、产物、指标与边界。
+- [后端接入与交接](docs/backend-contract.md)：队友可直接实现的接口与验收要求。
+- [阶段计划](docs/plan.md)：状态、前置条件和分工。
+- [协作约定](CONTRIBUTING.md)：独立分支、PR 互审与复跑。
+- [验证记录](docs/verification.md)：实际输出、失败修复与未验证事项。
 
-当前优先交付两人分工与开发计划，真实接口暂不配置。`cachelab.experiment` / `cachelab.evaluate` 是后续事件实验的约定接口，主分支现有入口仍为上述 `cachelab.run`；文档中的新接口命令须等代码合并并验证后执行。
-
-## 来源
-
-任务依据本地课程《基于 VirtualHome 状态轨迹的智能体缓存复用与失效管理》指导书。指导书与教师参考实现未上传。
-
-VirtualHome 官方项目：[xavierpuigf/virtualhome](https://github.com/xavierpuigf/virtualhome)。本项目目前只回放课程提供的 VirtualHome 风格轨迹，未集成或验证官方模拟器。
+官方环境见 [VirtualHome](https://github.com/xavierpuigf/virtualhome)。当前回放课程风格轨迹，未安装或验证图形模拟器。
