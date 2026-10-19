@@ -1,6 +1,7 @@
 """Bind event evidence to a frozen input manifest and cache provenance."""
 import hashlib
 import json
+import math
 
 from .core import Cache, canonical, projection
 from .judge import VERSION
@@ -29,6 +30,36 @@ def build_manifest(sessions, tasks):
                                               for g in ('fine', 'coarse')},
                     })
     return manifest
+
+
+def request_schema_valid(event):
+    required = {'strategy_id', 'session_id', 'task_id', 'task_step', 'kind', 'target',
+                'backend', 'strategy', 'granularity', 'event_id', 'gold', 'model_input',
+                'model_input_sha256', 'dependencies', 'dependency_sha256', 'reused',
+                'had_prior', 'prior_gold', 'prior_answer', 'answer', 'error', 'error_type',
+                'raw_output', 'latency_seconds', 'request_wall_seconds', 'reason',
+                'session_step', 'cache_created_step', 'cache_source_event_id'}
+    if not isinstance(event, dict) or not required.issubset(event):
+        return False
+    for field in ('latency_seconds', 'request_wall_seconds'):
+        value = event[field]
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value < 0:
+            return False
+    if not isinstance(event['reused'], bool) or not isinstance(event['had_prior'], bool):
+        return False
+    for field in ('task_step', 'session_step'):
+        if not isinstance(event[field], int) or isinstance(event[field], bool) or event[field] < 1:
+            return False
+    if event['error'] is None:
+        if event['error_type'] is not None or not isinstance(event['answer'], dict):
+            return False
+    elif (not isinstance(event['error'], str) or not event['error'] or event['answer'] is not None
+          or event['error_type'] not in {'output', 'transport', 'configuration', 'backend'}):
+        return False
+    if event['reused']:
+        return event['model_input'] is None and event['raw_output'] is None
+    return (isinstance(event['model_input'], dict)
+            and (event['raw_output'] is None or isinstance(event['raw_output'], str)))
 
 
 def validate(events, config, state, raw):
@@ -73,6 +104,9 @@ def validate(events, config, state, raw):
             continue
         if typ != 'request':
             errors.append('unknown_event_type')
+            continue
+        if not request_schema_valid(event):
+            errors.append('invalid_request_schema')
             continue
         identity = (strategy_id, *(event[f] for f in IDENTITY_FIELDS))
         if identity in actual:

@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from .judge import correct
-from .evidence import validate
+from .evidence import request_schema_valid, validate
 
 
 def aggregate(events, split_kind=False):
@@ -83,12 +83,14 @@ def evaluate(directory):
                 events.append(json.loads(line))
             except json.JSONDecodeError as exc:
                 raise ValueError(f"invalid event JSON at line {line_number}") from exc
-    rows = aggregate(events)
     config = json.loads((directory / "config.json").read_text())
     expected = set(config["strategies"])
     state_path = directory / "run-state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {"status": "incomplete"}
     integrity_errors = validate(events, config, state, raw)
+    metric_events = [event for event in events if event.get('event_type') != 'request'
+                     or request_schema_valid(event)]
+    rows = aggregate(metric_events)
     complete = (not integrity_errors and state["status"] == "completed" and {r["strategy_id"] for r in rows} == expected
                 and all(r["requests"] == config["expected_requests_per_strategy"] for r in rows))
     status = "EXPERIMENT_COMPLETED" if complete else "INCOMPLETE"
@@ -98,7 +100,7 @@ def evaluate(directory):
               "course_acceptance": "NOT_READY", "integrity_errors": sorted(set(integrity_errors)),
               "backend": config["backend"],
               "judge_version": config["judge_version"], "results": rows,
-              "by_kind": aggregate(events, split_kind=True), "run_state": state}
+              "by_kind": aggregate(metric_events, split_kind=True), "run_state": state}
     # Derived artifacts can be rebuilt; config and raw events are never rewritten.
     (directory / "summary.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     if rows:

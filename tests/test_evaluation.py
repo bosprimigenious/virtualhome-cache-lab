@@ -65,6 +65,25 @@ class EvaluationTests(unittest.TestCase):
                 (p / 'run-state.json').write_text(json.dumps(state))
                 self.assertEqual(evaluate(p)['status'], 'INCOMPLETE')
 
+    def test_invalid_fresh_outcome_or_latency_cannot_pass(self):
+        for changes in ({'model_input': None}, {'answer': None, 'error': None},
+                        {'latency_seconds': -1}, {'latency_seconds': float('nan')},
+                        {'error': '', 'error_type': 'transport'}):
+            with self.subTest(changes=changes), tempfile.TemporaryDirectory() as tmp:
+                p = Path(tmp)
+                write_fixture(p)
+                events = [json.loads(line) for line in (p / 'events.jsonl').read_text().splitlines()]
+                target = next(e for e in events if e.get('event_type') == 'request' and not e['reused'])
+                target.update(changes)
+                raw = ''.join(json.dumps(e)+'\n' for e in events).encode()
+                (p / 'events.jsonl').write_bytes(raw)
+                state = json.loads((p / 'run-state.json').read_text())
+                state['events_sha256'] = hashlib.sha256(raw).hexdigest()
+                (p / 'run-state.json').write_text(json.dumps(state))
+                report = evaluate(p)
+                self.assertEqual(report['status'], 'INCOMPLETE')
+                self.assertIn('invalid_request_schema', report['integrity_errors'])
+
     def test_missing_digest_and_unknown_judge_are_not_ready(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp)
