@@ -26,12 +26,14 @@ def invoke(backend: Backend, kind, target, graph):
         if (not isinstance(latency, (float, int)) or isinstance(latency, bool)
                 or not math.isfinite(latency) or latency < 0):
             raise ValueError('invalid latency')
-        if result.get('error') is not None and not isinstance(result['error'], str):
+        if result.get('error') is not None and (not isinstance(result['error'], str) or not result['error']):
             raise ValueError('invalid error')
         if result.get('error') is None and not isinstance(result.get('answer'), dict):
             raise ValueError('successful result must have structured answer')
         if result.get('error_type') not in {None, 'output', 'transport', 'configuration', 'backend'}:
             raise ValueError('invalid error category')
+        if result.get('error') is None and result.get('error_type') is not None:
+            raise ValueError('failure category without error')
         # Allow only documented outcome fields; a backend cannot replace event identity or gold.
         allowed = ('answer', 'raw_output', 'latency_seconds', 'error', 'error_type',
                    'usage', 'finish_reason', 'response_model', 'system_fingerprint')

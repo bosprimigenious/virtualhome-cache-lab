@@ -33,7 +33,8 @@ class BackendTests(unittest.TestCase):
 
     def test_bad_latency_or_missing_answer_is_a_failed_result(self):
         for result in [None, response(latency_seconds=float('nan')), response(latency_seconds=-1),
-                       response(answer=None), response(error_type='typo')]:
+                       response(answer=None), response(error_type='typo'), response(error=''),
+                       response(error_type='transport')]:
             with self.subTest(result=result):
                 self.assertEqual(invoke(Adapter(result), 'summary', None, {})['error_type'], 'backend')
 
