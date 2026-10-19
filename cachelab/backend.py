@@ -1,5 +1,6 @@
 """Minimal integration boundary owned jointly with the model implementation."""
 from copy import deepcopy
+import json
 import math
 from time import perf_counter
 from typing import Protocol
@@ -42,6 +43,7 @@ def invoke(backend: Backend, kind, target, graph):
         if outcome['error']:
             outcome['answer'] = None
             outcome['error_type'] = outcome['error_type'] or 'backend'
+        json.dumps(outcome, allow_nan=False)
         return outcome
     except Exception as exc:
         return {'answer': None, 'raw_output': None,
