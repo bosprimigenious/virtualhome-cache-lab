@@ -31,10 +31,12 @@ uv run python -m cachelab.run --course-zip /absolute/path/virtualhome_cache_lab.
 
 | 成员 | 主责 | 完成证据 |
 |---|---|---|
-| A（账号待定） | 状态图依赖、缓存策略、粒度与 k 消融 | 新增/删除/抓取/跨会话回归测试；完整事件日志与失效分析 |
-| B（账号待定） | 小模型接口、配置、评测与报告 | 同模型同提示同解码配置跑全策略；原始输出、调用次数、推理耗时 |
+| bosprimigenious | 状态图依赖、缓存策略、粒度与 k 消融 | 新增/删除/抓取/跨会话回归测试；完整事件日志与失效分析 |
+| e39267d8 | 小模型接口、配置、评测与报告 | 同模型同提示同解码配置跑全策略；原始输出、调用次数、推理耗时 |
 
-共同复核数据、实验结论与报告；彼此运行对方的代码，不只阅读结论。详见 [开发步骤](docs/development.md) 和 [验收记录](docs/verification.md)。
+共同复核数据、实验结论与报告；彼此运行对方的代码，不只阅读结论。详见 [开发手册](docs/development.md)、[阶段计划](docs/plan.md)、[协作约定](CONTRIBUTING.md) 和 [验收记录](docs/verification.md)。
+
+当前优先交付两人分工与开发计划，真实接口暂不配置。`cachelab.experiment` / `cachelab.evaluate` 是后续事件实验的约定接口，主分支现有入口仍为上述 `cachelab.run`；文档中的新接口命令须等代码合并并验证后执行。
 
 ## 来源
 
