@@ -1,0 +1,158 @@
+{
+  "status": "MOCK_ONLY_NOT_FINAL",
+  "data_audit": {
+    "zip_sha256": "b81cbedca438ea921a1bb1d02197089c3913123ac9aa4b3945c9f93e831044bf",
+    "sessions": 5,
+    "task_files": 60,
+    "graph_discontinuities": [
+      {
+        "session_id": "session_00",
+        "task_id": "task_0004"
+      },
+      {
+        "session_id": "session_01",
+        "task_id": "task_0012"
+      },
+      {
+        "session_id": "session_02",
+        "task_id": "task_0020"
+      },
+      {
+        "session_id": "session_03",
+        "task_id": "task_0028"
+      },
+      {
+        "session_id": "session_04",
+        "task_id": "task_0036"
+      }
+    ],
+    "referenced_tasks": 40,
+    "unreferenced_tasks": [
+      "task_0040",
+      "task_0041",
+      "task_0042",
+      "task_0043",
+      "task_0044",
+      "task_0045",
+      "task_0046",
+      "task_0047",
+      "task_0048",
+      "task_0049",
+      "task_0050",
+      "task_0051",
+      "task_0052",
+      "task_0053",
+      "task_0054",
+      "task_0055",
+      "task_0056",
+      "task_0057",
+      "task_0058",
+      "task_0059"
+    ],
+    "continuity_verified": false
+  },
+  "results": [
+    {
+      "strategy": "none",
+      "k": null,
+      "granularity": "fine",
+      "backend": "gold_mock",
+      "requests": 320,
+      "decision_calls": 320,
+      "reuse_events": 0,
+      "valid_reuse": 0,
+      "stale_reuse": 0,
+      "fresh_correct": 320,
+      "valid_reuse_rate": null,
+      "stale_reuse_rate": null,
+      "mock_compute_seconds": 0.0007769481744617224,
+      "evaluation_model_calls": 0,
+      "real_llm_latency_seconds": null
+    },
+    {
+      "strategy": "fixed",
+      "k": 3,
+      "granularity": "fine",
+      "backend": "gold_mock",
+      "requests": 320,
+      "decision_calls": 124,
+      "reuse_events": 196,
+      "valid_reuse": 135,
+      "stale_reuse": 61,
+      "fresh_correct": 124,
+      "valid_reuse_rate": 0.6887755102040817,
+      "stale_reuse_rate": 0.3112244897959184,
+      "mock_compute_seconds": 0.0003764510038308799,
+      "evaluation_model_calls": 0,
+      "real_llm_latency_seconds": null
+    },
+    {
+      "strategy": "fixed",
+      "k": 5,
+      "granularity": "fine",
+      "backend": "gold_mock",
+      "requests": 320,
+      "decision_calls": 84,
+      "reuse_events": 236,
+      "valid_reuse": 130,
+      "stale_reuse": 106,
+      "fresh_correct": 84,
+      "valid_reuse_rate": 0.5508474576271186,
+      "stale_reuse_rate": 0.4491525423728814,
+      "mock_compute_seconds": 0.00021145478240214288,
+      "evaluation_model_calls": 0,
+      "real_llm_latency_seconds": null
+    },
+    {
+      "strategy": "fixed",
+      "k": 10,
+      "granularity": "fine",
+      "backend": "gold_mock",
+      "requests": 320,
+      "decision_calls": 58,
+      "reuse_events": 262,
+      "valid_reuse": 129,
+      "stale_reuse": 133,
+      "fresh_correct": 58,
+      "valid_reuse_rate": 0.49236641221374045,
+      "stale_reuse_rate": 0.5076335877862596,
+      "mock_compute_seconds": 0.00012696103658527136,
+      "evaluation_model_calls": 0,
+      "real_llm_latency_seconds": null
+    },
+    {
+      "strategy": "dependency",
+      "k": null,
+      "granularity": "fine",
+      "backend": "gold_mock",
+      "requests": 320,
+      "decision_calls": 240,
+      "reuse_events": 80,
+      "valid_reuse": 80,
+      "stale_reuse": 0,
+      "fresh_correct": 240,
+      "valid_reuse_rate": 1.0,
+      "stale_reuse_rate": 0.0,
+      "mock_compute_seconds": 0.0005646690260618925,
+      "evaluation_model_calls": 0,
+      "real_llm_latency_seconds": null
+    },
+    {
+      "strategy": "dependency",
+      "k": null,
+      "granularity": "coarse",
+      "backend": "gold_mock",
+      "requests": 320,
+      "decision_calls": 250,
+      "reuse_events": 70,
+      "valid_reuse": 70,
+      "stale_reuse": 0,
+      "fresh_correct": 250,
+      "valid_reuse_rate": 1.0,
+      "stale_reuse_rate": 0.0,
+      "mock_compute_seconds": 0.0006069062219467014,
+      "evaluation_model_calls": 0,
+      "real_llm_latency_seconds": null
+    }
+  ]
+}
