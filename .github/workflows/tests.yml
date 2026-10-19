@@ -13,4 +13,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m unittest discover -s tests -v
+      - run: python -m cachelab.acceptance --output-dir results/ci-acceptance
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: acceptance-python-${{ matrix.python }}
+          path: results/ci-acceptance/
