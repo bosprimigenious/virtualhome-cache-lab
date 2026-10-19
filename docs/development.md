@@ -2,13 +2,13 @@
 
 ## 状态和输入
 
-**本次交付范围：两人分工、开发手册、阶段计划。** 用户决定先不配置真实接口。当前主分支已发布的是 `cachelab.run` 离线基线和 8 项单元测试；下面的 `cachelab.experiment`、`cachelab.evaluate` 命令及事件字段是后续实现的约定接口，需代码合并并现场验证后执行，不代表已经发布。
+**本分支已实现 bosprimigenious 的离线开发范围。** 依赖、缓存、事件接口、复算和聚合验收可执行；真实接口仍按用户决定暂缓配置，模型客户端由 e39267d8 按 [后端契约](backend-contract.md) 接续。主分支在 PR 合并前仍可能是旧基线。
 
 课程完整实验 **NOT READY**。OpenAI 兼容接口的地址、模型名和鉴权要求尚待提供；没有实际调用记录之前，不把接口代码、Mock 结果或测试通过写成真实模型验证通过。不安装 Ollama，不自动购买服务或调用付费接口。
 
 数据来自本地课程 ZIP，不在公开仓库再分发。目前发现 60 个任务文件，原 `sessions.json` 的 5 个会话只引用 40 个任务，另有 5 处会话内状态不连续。正式划分和报告模板尚待老师核实。按照原清单回放并保存差异，不自行补成 60 个任务。先核实划分再补任务；反过来会把独立世界拼接成连续状态，污染跨任务缓存结论。
 
-本手册规划 `cachelab.experiment` 的事件日志实验入口；已发布的 `cachelab.run` 与已有 Mock 基线不与未来新入口结果直接混合。新入口约定默认在不连续边界清缓存，现有入口未执行这项处理。
+本手册对应已实现的 `cachelab.experiment` 事件实验入口。历史 `cachelab.run` 与旧 Mock 基线不与新入口直接混合。新入口默认在不连续边界清缓存，历史入口未执行这项处理。
 
 ## 两人责任与交接
 
@@ -31,9 +31,16 @@ uv run python -m unittest discover -s tests -v
 uv run python -m cachelab.run --course-zip /absolute/path/virtualhome_cache_lab.zip --output results/baseline-001.json
 ```
 
-其余新入口命令属于以下阶段的实施契约。先完成阶段 1 的实现与测试，再执行新入口；反过来会因模块尚未合并而失败。
+当前离线范围的统一验收：
 
-## 后续环境和最小回放
+```bash
+uv run python -m cachelab.acceptance --output-dir results/acceptance-001
+uv run python -m cachelab.acceptance --course-zip /absolute/path/virtualhome_cache_lab.zip --output-dir results/course-acceptance-001
+```
+
+第一个命令使用自建场景；第二个核验本地教师包。目录必须不存在。`acceptance.json` 的 READY 仅对应 `bosprimigenious_offline_integration`，不表示真实模型或课程完整验收通过。CI 在 Python 3.11/3.14 上运行同一门禁并保留执行产物。
+
+## 环境和最小回放
 
 在仓库根目录运行。先确认工具存在；Python 需 3.11+，依赖和执行环境跟随 `uv.lock`。
 
@@ -63,7 +70,7 @@ Mock 直接使用 gold，只验证数据回放、失效逻辑、日志和汇总�
 
 ## 接入 OpenAI 兼容接口
 
-用户提供服务地址、完整模型名、鉴权要求及可调用范围后才执行真实请求。确认服务支持当前适配器的 Chat Completions 路径与消息格式；不能仅凭“OpenAI 兼容”判断所有参数可用。`--base-url` 使用 API 根地址，例如服务给出的 `/v1` 地址，不填写某次请求的完整路径。
+**此节是真实模型的后续接线契约，当前不执行。** 队友先实现 `cachelab.model.ModelClient` 并通过后端边界测试；客户端缺失时 CLI 预检报错，不导入保存在本机的草稿。用户再决定启动并提供服务地址、完整模型名、鉴权要求及可调用范围，之后才执行真实请求。确认服务支持当前适配器的 Chat Completions 路径与消息格式；不能仅凭“OpenAI 兼容”判断所有参数可用。`--base-url` 使用 API 根地址，例如服务给出的 `/v1` 地址，不填写某次请求的完整路径。
 
 远端密钥仅通过环境变量传入，不写到命令参数、文档、Git、事件日志或 `config.json`。在本地私密会话中设置 `VHCACHE_API_KEY`，避免把实际值贴进共享终端记录。`--api-key-env` 的值是变量名。仅确实无需鉴权的服务可不设置该变量；缺少远端鉴权信息时不要反复试请求。
 
@@ -117,11 +124,11 @@ uv run python -m cachelab.evaluate results/openai-full-reset-001
 | `summary.json` | 首次运行生成的策略汇总；只能以原始事件和配置为依据 |
 | `comparison.csv` / `comparison.md` | 六组指标对照；明确 Mock 与真模型、复用分母和错误定义 |
 
-`cachelab.evaluate` 从事件重算汇总，不调用模型，不覆盖原始日志。复算输出文件名以命令实际输出为准。对比复算指标和首次汇总；不一致先定位事件与计数规则，不手改结果补齐。
+`cachelab.evaluate` 从事件重算汇总，不调用模型，不覆盖原始日志。配置保存预期身份及 gold/input/dependency 哈希，run-state 保存日志与配置摘要；复算验证这些绑定、缓存来源、策略判定、重置链、事件 schema 和评分版本。不把摘要当作防止所有文件被同时恶意重写的数字签名。复算输出文件名以命令实际输出为准。对比复算指标和首次汇总；不一致先定位事件与计数规则，不手改结果补齐。
 
 汇总同时给出全部请求与 location/summary 分项结果。`stale_reuse` 是复用答案与当前 gold 不等价，包含模型原生错误；`state_stale_reuse` 只计 gold 已变化且当前复用答案仍错；`model_error_reuse` 计 gold 未变化但缓存创建时答案已错。`missed_invalidation` 计 gold 已变化却复用，即使偶然答对也仍是一次失效漏判。`false_invalidation` 计已有条目、gold 未变却被 fixed/dependency 重算；没有已有条目的 miss 与边界清空不计入。`invalidation_accuracy` 为正确失效加正确保留除以已有条目判定机会，none 不适用。
 
-`real_llm_latency_seconds` 是 HTTP 模型调用墙钟总耗时，包含传输与失败等待，不是服务端纯计算时间；`request_wall_seconds` 包含依赖处理和调用，整个运行 wall_seconds 还包含日志及磁盘开销。模型版本只记录服务实际返回的 model/system_fingerprint（若提供），不把字符串名称当作已校验权重版本。
+`real_llm_latency_seconds` 是 HTTP 模型调用墙钟总耗时，包含传输与失败等待，不是服务端纯计算时间；`request_wall_seconds` 包含依赖处理和调用，`run-state.wall_seconds` 包含回放、调用、日志和磁盘开销，不包含前置数据加载/配置生成和后续离线复算。模型版本只记录服务实际返回的 model/system_fingerprint（若提供），不把字符串名称当作已校验权重版本。
 
 `COMPLETED_WITH_MODEL_ERRORS` 表示遍历完成但发生模型调用/解析错误；`INCOMPLETE` 包括截断、重复请求或计数不闭合。两者实验/复算 CLI 均退出 2。原始事件以策略+会话+任务+步+查询类型+目标作唯一键，缺失或重复不能仅靠总数通过验收。
 
